@@ -1,0 +1,20 @@
+[
+  {
+    "fullName": "Summer Malik",
+    "code": "4821",
+    "role": "admin",
+    "active": true
+  },
+  {
+    "fullName": "Example Officer",
+    "code": "1937",
+    "role": "officer",
+    "active": true
+  },
+  {
+    "fullName": "Example Member",
+    "code": "2604",
+    "role": "member",
+    "active": true
+  }
+]

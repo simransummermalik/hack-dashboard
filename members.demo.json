@@ -1,0 +1,12 @@
+[
+  { "fullName": "Demo Admin", "code": "0001", "role": "admin", "active": true },
+  { "fullName": "Demo Officer Alex Rivera", "code": "0002", "role": "officer", "active": true },
+  { "fullName": "Demo Officer Jamie Chen", "code": "0003", "role": "officer", "active": true },
+  { "fullName": "Demo Member Priya Patel", "code": "0004", "role": "member", "active": true },
+  { "fullName": "Demo Member Sam Osei", "code": "0005", "role": "member", "active": true },
+  { "fullName": "Demo Member Taylor Novak", "code": "0006", "role": "member", "active": true },
+  { "fullName": "Demo Member Morgan Lee", "code": "0007", "role": "member", "active": true },
+  { "fullName": "Demo Member Casey Kim", "code": "0008", "role": "member", "active": true },
+  { "fullName": "Demo Member Jordan Diaz", "code": "0009", "role": "member", "active": true },
+  { "fullName": "Demo Inactive Member", "code": "0010", "role": "member", "active": false }
+]
