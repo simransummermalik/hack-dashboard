@@ -16,15 +16,19 @@ function createClient() {
       "DATABASE_URL is not set. Copy .env.example to .env.local and fill in your Supabase connection string."
     );
   }
-  // Serverless-friendly settings: each function instance should hold at
-  // most one connection against the pooler (Supabase's Supavisor pooler
-  // handles the real fan-out), and idle connections should be released
-  // quickly rather than held open, since instances are ephemeral. `prepare:
-  // false` is required because the transaction-mode pooler doesn't support
-  // prepared statements.
+  // Serverless-friendly settings. `max` needs to be low enough that a burst
+  // of concurrent serverless instances can't exhaust the pooler's
+  // connection budget (that's what caused login to hang under load), but
+  // high enough that a single request's own internal Promise.all() query
+  // batches (several pages fire 3-6 queries concurrently) don't get
+  // serialized onto one connection, which just trades one slowdown for
+  // another. 5 is a middle ground for this app's traffic size. Idle
+  // connections are released quickly since instances are ephemeral.
+  // `prepare: false` is required because the transaction-mode pooler
+  // doesn't support prepared statements.
   return postgres(connectionString, {
     prepare: false,
-    max: 1,
+    max: 5,
     idle_timeout: 20,
     connect_timeout: 10,
   });
