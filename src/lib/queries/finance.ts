@@ -71,10 +71,12 @@ export async function listExpenses(): Promise<ExpenseRow[]> {
   }));
 }
 
-export async function listGrants(): Promise<GrantRow[]> {
-  const grantRows = await db.select().from(grants).orderBy(desc(grants.createdAt));
-  const allExpenses = await listExpenses();
-  const allLinks = await db.select().from(grantLinks);
+export async function listGrants(preloadedExpenses?: ExpenseRow[]): Promise<GrantRow[]> {
+  const [grantRows, allExpenses, allLinks] = await Promise.all([
+    db.select().from(grants).orderBy(desc(grants.createdAt)),
+    preloadedExpenses ? Promise.resolve(preloadedExpenses) : listExpenses(),
+    db.select().from(grantLinks),
+  ]);
 
   return grantRows.map((g) => {
     const grantExpenses = allExpenses.filter((e) => e.grantId === g.id);
@@ -104,7 +106,8 @@ export async function listGrants(): Promise<GrantRow[]> {
 }
 
 export async function getFinanceSummary() {
-  const grantRows = await listGrants();
+  const allExpenses = await listExpenses();
+  const grantRows = await listGrants(allExpenses);
   const summary = computeOrgFinancialSummary(
     grantRows.map((g) => ({
       totalAwardedCents: g.totalAwardedCents,
@@ -115,7 +118,6 @@ export async function getFinanceSummary() {
   );
 
   const spendingByCategory = new Map<string, number>();
-  const allExpenses = await listExpenses();
   for (const e of allExpenses) {
     const key = e.categoryName ?? "Uncategorized";
     spendingByCategory.set(key, (spendingByCategory.get(key) ?? 0) + e.amountCents);

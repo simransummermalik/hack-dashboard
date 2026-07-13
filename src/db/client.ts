@@ -35,6 +35,10 @@ function createClient() {
     // time to spare to send a real response — instead of racing the
     // platform's own timeout and coming back as an opaque 504.
     connect_timeout: 5,
+    // Explicit rather than relying on the driver to parse `?sslmode=require`
+    // out of the URL — that parsing has behaved inconsistently for some
+    // postgres.js versions specifically inside Vercel's serverless runtime.
+    ssl: "require",
   });
 }
 
