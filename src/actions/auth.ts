@@ -54,37 +54,45 @@ export async function login(formData: FormData): Promise<LoginResult> {
   }
 
   try {
-    await assertNotLockedOut(normalized, ip);
-  } catch (err) {
-    if (err instanceof LockedOutError) {
-      await recordAudit({ actorId: null, action: "login_locked_out", metadata: { normalizedName: normalized, ip } });
-      return { ok: false, error: err.message };
+    try {
+      await assertNotLockedOut(normalized, ip);
+    } catch (err) {
+      if (err instanceof LockedOutError) {
+        await recordAudit({ actorId: null, action: "login_locked_out", metadata: { normalizedName: normalized, ip } });
+        return { ok: false, error: err.message };
+      }
+      throw err;
     }
-    throw err;
+
+    const rows = await db.select().from(members).where(eq(members.normalizedName, normalized)).limit(1);
+    const member = rows[0];
+
+    const hashToCheck = member?.codeHash ?? DUMMY_CODE_HASH;
+    const codeMatches = await verifyAccessCode(code, hashToCheck);
+    const success = Boolean(member && member.active && codeMatches);
+
+    await recordLoginAttempt({ normalizedName: normalized, ip, success });
+
+    if (!success) {
+      await recordAudit({
+        actorId: member?.id ?? null,
+        action: "login_failed",
+        metadata: { normalizedName: normalized, ip },
+      });
+      return { ok: false, error: "Invalid name or access code." };
+    }
+
+    await createSession(member!.id);
+    await recordAudit({ actorId: member!.id, action: "login_success", metadata: { ip } });
+
+    return { ok: true };
+  } catch (err) {
+    // Anything unexpected here (most likely: the database is unreachable)
+    // should surface as a clean error the UI can show, not an unhandled
+    // exception that leaves the sign-in button spinning forever.
+    console.error("Login action failed:", err);
+    return { ok: false, error: "We couldn't reach the database. Please try again in a moment." };
   }
-
-  const rows = await db.select().from(members).where(eq(members.normalizedName, normalized)).limit(1);
-  const member = rows[0];
-
-  const hashToCheck = member?.codeHash ?? DUMMY_CODE_HASH;
-  const codeMatches = await verifyAccessCode(code, hashToCheck);
-  const success = Boolean(member && member.active && codeMatches);
-
-  await recordLoginAttempt({ normalizedName: normalized, ip, success });
-
-  if (!success) {
-    await recordAudit({
-      actorId: member?.id ?? null,
-      action: "login_failed",
-      metadata: { normalizedName: normalized, ip },
-    });
-    return { ok: false, error: "Invalid name or access code." };
-  }
-
-  await createSession(member!.id);
-  await recordAudit({ actorId: member!.id, action: "login_success", metadata: { ip } });
-
-  return { ok: true };
 }
 
 export async function logout(): Promise<void> {

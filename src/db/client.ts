@@ -30,7 +30,11 @@ function createClient() {
     prepare: false,
     max: 5,
     idle_timeout: 20,
-    connect_timeout: 10,
+    // Deliberately shorter than Vercel's default 10s function timeout, so
+    // a bad/unreachable connection string throws a catchable error with
+    // time to spare to send a real response — instead of racing the
+    // platform's own timeout and coming back as an opaque 504.
+    connect_timeout: 5,
   });
 }
 

@@ -27,12 +27,21 @@ export default function LoginPage() {
     formData.set("code", code);
 
     startTransition(async () => {
-      const result = await login(formData);
-      if (result.ok) {
-        router.push("/dashboard");
-        router.refresh();
-      } else {
-        setError(result.error ?? "Invalid name or access code.");
+      try {
+        const result = await login(formData);
+        if (result.ok) {
+          router.push("/dashboard");
+          router.refresh();
+        } else {
+          setError(result.error ?? "Invalid name or access code.");
+        }
+      } catch (err) {
+        // A thrown error here (as opposed to a clean {ok:false} response)
+        // usually means the server action itself failed unexpectedly (e.g.
+        // a database connection problem) rather than a bad name/code. Show
+        // it instead of leaving the button spinning forever.
+        console.error("Login failed unexpectedly:", err);
+        setError("Something went wrong signing in. Please try again in a moment.");
       }
     });
   }
