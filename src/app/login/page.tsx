@@ -45,7 +45,7 @@ export default function LoginPage() {
             {orgName.slice(0, 2).toUpperCase()}
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">{orgName} Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Sign in with your full name and 4-digit access code.</p>
+          <p className="text-sm text-muted-foreground">Sign in with your name and 4-digit access code.</p>
         </div>
 
         <Card>
@@ -56,17 +56,20 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={onSubmit} className="space-y-4" noValidate>
               <div className="space-y-1.5">
-                <Label htmlFor="fullName">Full name</Label>
+                <Label htmlFor="fullName">Name</Label>
                 <Input
                   id="fullName"
                   name="fullName"
                   autoComplete="name"
-                  placeholder="e.g. Summer Malik"
+                  placeholder="e.g. Summer"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
                   autoFocus
                 />
+                <p className="text-xs text-muted-foreground">
+                  Use whatever name an admin added you with — often just your first name.
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="code">4-digit access code</Label>

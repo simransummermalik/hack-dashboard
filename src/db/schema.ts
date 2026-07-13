@@ -112,6 +112,7 @@ export const members = pgTable("members", {
   fullName: text("full_name").notNull(),
   normalizedName: text("normalized_name").notNull(), // lowercase/trimmed, used for login lookup
   codeHash: text("code_hash").notNull(),
+  email: text("email"), // optional — used only for outbound email notifications
   role: memberRoleEnum("role").notNull().default("member"),
   active: boolean("active").notNull().default(true),
   isDemo: boolean("is_demo").notNull().default(false),

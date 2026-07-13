@@ -16,7 +16,18 @@ function createClient() {
       "DATABASE_URL is not set. Copy .env.example to .env.local and fill in your Supabase connection string."
     );
   }
-  return postgres(connectionString, { prepare: false, max: 10 });
+  // Serverless-friendly settings: each function instance should hold at
+  // most one connection against the pooler (Supabase's Supavisor pooler
+  // handles the real fan-out), and idle connections should be released
+  // quickly rather than held open, since instances are ephemeral. `prepare:
+  // false` is required because the transaction-mode pooler doesn't support
+  // prepared statements.
+  return postgres(connectionString, {
+    prepare: false,
+    max: 1,
+    idle_timeout: 20,
+    connect_timeout: 10,
+  });
 }
 
 let _db: DrizzleDb | undefined;

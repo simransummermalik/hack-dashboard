@@ -55,6 +55,7 @@ const memberSeedSchema = z.array(
     code: z.string().regex(/^\d{4}$/, "code must be exactly 4 digits"),
     role: z.enum(["admin", "officer", "member"]),
     active: z.boolean(),
+    email: z.string().email().optional(),
   })
 );
 
@@ -95,6 +96,7 @@ async function upsertMembers(
         .set({
           fullName: entry.fullName,
           codeHash,
+          email: entry.email ?? null,
           role: entry.role,
           active: entry.active,
           isDemo,
@@ -109,6 +111,7 @@ async function upsertMembers(
           fullName: entry.fullName,
           normalizedName: normalized,
           codeHash,
+          email: entry.email ?? null,
           role: entry.role,
           active: entry.active,
           isDemo,

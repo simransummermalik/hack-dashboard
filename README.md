@@ -18,12 +18,13 @@ Postgres**. Authentication is custom (full name + 4-digit code), not Supabase Au
 5. [Adding / updating members](#adding--updating-members)
 6. [Assigning admins](#assigning-admins)
 7. [Seed & demo data](#seed--demo-data)
-8. [Deployment](#deployment)
-9. [Testing](#testing)
-10. [Project structure](#project-structure)
-11. [Feature list](#feature-list)
-12. [Security notes](#security-notes)
-13. [Completion checklist](#completion-checklist)
+8. [Email notifications](#email-notifications)
+9. [Deployment](#deployment)
+10. [Testing](#testing)
+11. [Project structure](#project-structure)
+12. [Feature list](#feature-list)
+13. [Security notes](#security-notes)
+14. [Completion checklist](#completion-checklist)
 
 ---
 
@@ -182,6 +183,46 @@ or set `LOAD_DEMO_DATA="true"` in `.env.local` and re-run the seed. Demo members
 once (it's skipped on subsequent seed runs once demo data is detected), so it's safe to re-run.
 
 **Never put real member codes in `members.demo.json`** — that file is committed to the repository.
+
+---
+
+## Email notifications
+
+Every in-app notification (task assigned, review requested, changes requested, mentions, meeting action items,
+expense approvals, admin announcements, etc.) can **also** be emailed, on top of showing up in the notification
+center. This is entirely optional — with no configuration, the app works exactly as before, purely in-app.
+
+### Enabling it
+
+1. Create a free account at [resend.com](https://resend.com) and copy your API key.
+2. Add two variables to `.env.local` (and to your deployment's environment variables):
+   ```
+   RESEND_API_KEY="re_..."
+   EMAIL_FROM="HAVK Dashboard <onboarding@resend.dev>"
+   ```
+3. Add an `"email"` field to each member you want emailed in `members.private.json`:
+   ```json
+   { "fullName": "Summer Malik", "code": "4821", "role": "admin", "active": true, "email": "summer@example.edu" }
+   ```
+   `email` is optional per member — anyone without one just gets in-app notifications.
+4. Run `npm run db:seed` to write the email addresses to the database.
+
+### The sandbox limitation
+
+Until you verify a custom sending domain in Resend, the default sender (`onboarding@resend.dev`) can only deliver to
+**the email address on your own Resend account** — not to arbitrary member addresses. You'll see emails succeed for
+yourself and silently not arrive for anyone else. This is a Resend anti-abuse restriction, not a bug in the app.
+
+To send to your whole roster, verify a domain you control under **Resend → Domains**, then set:
+```
+EMAIL_FROM="HAVK Dashboard <notifications@yourdomain.org>"
+```
+
+### Failure handling
+
+Email delivery failures (bad key, provider outage, an address Resend won't send to) are logged server-side and
+swallowed — they never make an otherwise-successful action (like creating a task) fail or roll back. In-app
+notifications are unaffected either way.
 
 ---
 

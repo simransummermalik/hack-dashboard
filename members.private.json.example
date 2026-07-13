@@ -3,7 +3,8 @@
     "fullName": "Summer Malik",
     "code": "4821",
     "role": "admin",
-    "active": true
+    "active": true,
+    "email": "summer@example.edu"
   },
   {
     "fullName": "Example Officer",
