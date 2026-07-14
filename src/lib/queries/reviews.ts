@@ -8,8 +8,16 @@ export interface PendingReviewItem extends TaskListItem {
   reviewId: string;
 }
 
-/** Tasks where the given member has a pending (not yet submitted) review. */
-export async function listPendingReviewsForMember(memberId: string): Promise<PendingReviewItem[]> {
+/**
+ * Tasks where the given member has a pending (not yet submitted) review.
+ * Pass `preloadedTasks` when the caller already has a fresh
+ * `listTasksWithContext()` result (e.g. the dashboard) to avoid querying
+ * the same task/assignee/review data twice in one request.
+ */
+export async function listPendingReviewsForMember(
+  memberId: string,
+  preloadedTasks?: TaskListItem[]
+): Promise<PendingReviewItem[]> {
   const pending = await db
     .select({ taskId: taskReviews.taskId, reviewId: taskReviews.id })
     .from(taskReviews)
@@ -18,7 +26,7 @@ export async function listPendingReviewsForMember(memberId: string): Promise<Pen
   if (pending.length === 0) return [];
   const taskIdToReviewId = new Map(pending.map((p) => [p.taskId, p.reviewId]));
 
-  const allTasks = await listTasksWithContext();
+  const allTasks = preloadedTasks ?? (await listTasksWithContext());
   return allTasks
     .filter((t) => taskIdToReviewId.has(t.id))
     .map((t) => ({ ...t, reviewId: taskIdToReviewId.get(t.id)! }));

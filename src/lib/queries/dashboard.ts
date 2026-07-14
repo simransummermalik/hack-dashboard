@@ -19,14 +19,18 @@ export interface DashboardData {
 }
 
 export async function getDashboardData(memberId: string): Promise<DashboardData> {
-  const [allTasks, allMeetings, allIdeas, finance, activity, needsMyReview] = await Promise.all([
-    listTasksWithContext(),
-    listMeetings(),
-    listIdeas(),
-    getFinanceSummary(),
-    listRecentActivity(10),
-    listPendingReviewsForMember(memberId),
-  ]);
+  // Deliberately sequential rather than Promise.all — Supabase's
+  // transaction-mode pooler on smaller compute tiers doesn't reliably
+  // handle this many concurrent query chains from one request; firing them
+  // all at once was causing statement-timeout failures under real load.
+  // Each individual query is fast, so running them one at a time still
+  // keeps total load time reasonable while actually working.
+  const allTasks = await listTasksWithContext();
+  const allMeetings = await listMeetings();
+  const allIdeas = await listIdeas();
+  const finance = await getFinanceSummary();
+  const activity = await listRecentActivity(10);
+  const needsMyReview = await listPendingReviewsForMember(memberId, allTasks);
 
   const activeTasks = allTasks.filter((t) => t.status !== "completed" && t.status !== "archived");
 
