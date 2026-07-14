@@ -23,7 +23,9 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
   const meeting = await getMeetingDetail(params.id);
   if (!meeting) notFound();
 
-  const [members, comments] = await Promise.all([listActiveMembers(), listCommentsForEntity("meeting", meeting.id)]);
+  // Sequential — see src/lib/queries/dashboard.ts for why.
+  const members = await listActiveMembers();
+  const comments = await listCommentsForEntity("meeting", meeting.id);
   const canManage = isOfficerOrAdmin(member);
   const myAttendance = meeting.attendees.find((a) => a.memberId === member.id)?.status ?? "no_response";
 

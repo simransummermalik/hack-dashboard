@@ -15,14 +15,15 @@ export default async function AdminPage() {
   const member = await requireCurrentMemberOrRedirect();
   requireAdmin(member);
 
-  const [directory, taskCategories, ideaCategories, financeCategories, exemptionReasons, orgName] = await Promise.all([
-    getMemberDirectory(),
-    listCategories("task", false),
-    listCategories("idea", false),
-    listCategories("finance", false),
-    listReviewExemptionReasons(false),
-    getOrgSetting("org_name", process.env.NEXT_PUBLIC_ORG_NAME || "HAVK"),
-  ]);
+  // Sequential rather than Promise.all — see src/lib/queries/dashboard.ts
+  // for why: the Supabase pooler on this project's compute tier can't
+  // reliably handle many concurrent query chains from one request.
+  const directory = await getMemberDirectory();
+  const taskCategories = await listCategories("task", false);
+  const ideaCategories = await listCategories("idea", false);
+  const financeCategories = await listCategories("finance", false);
+  const exemptionReasons = await listReviewExemptionReasons(false);
+  const orgName = await getOrgSetting("org_name", process.env.NEXT_PUBLIC_ORG_NAME || "HAVK");
 
   return (
     <div className="space-y-4">

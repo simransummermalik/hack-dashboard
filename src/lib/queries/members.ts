@@ -37,13 +37,15 @@ export async function getMemberDirectory(): Promise<MemberDirectoryEntry[]> {
   if (all.length === 0) return [];
   const ids = all.map((m) => m.id);
 
-  const [assignmentRows, reviewRows] = await Promise.all([
-    db.select({ memberId: taskAssignees.memberId }).from(taskAssignees).where(inArray(taskAssignees.memberId, ids)),
-    db
-      .select({ memberId: taskReviews.memberId, status: taskReviews.status })
-      .from(taskReviews)
-      .where(inArray(taskReviews.memberId, ids)),
-  ]);
+  // Sequential — see src/lib/queries/dashboard.ts for why.
+  const assignmentRows = await db
+    .select({ memberId: taskAssignees.memberId })
+    .from(taskAssignees)
+    .where(inArray(taskAssignees.memberId, ids));
+  const reviewRows = await db
+    .select({ memberId: taskReviews.memberId, status: taskReviews.status })
+    .from(taskReviews)
+    .where(inArray(taskReviews.memberId, ids));
 
   const assignedCount = new Map<string, number>();
   for (const row of assignmentRows) {

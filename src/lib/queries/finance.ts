@@ -40,7 +40,6 @@ export interface GrantRow {
 }
 
 export async function listExpenses(): Promise<ExpenseRow[]> {
-  const requester = members;
   const rows = await db
     .select({
       id: expenses.id,
@@ -72,11 +71,10 @@ export async function listExpenses(): Promise<ExpenseRow[]> {
 }
 
 export async function listGrants(preloadedExpenses?: ExpenseRow[]): Promise<GrantRow[]> {
-  const [grantRows, allExpenses, allLinks] = await Promise.all([
-    db.select().from(grants).orderBy(desc(grants.createdAt)),
-    preloadedExpenses ? Promise.resolve(preloadedExpenses) : listExpenses(),
-    db.select().from(grantLinks),
-  ]);
+  // Sequential — see src/lib/queries/dashboard.ts for why.
+  const grantRows = await db.select().from(grants).orderBy(desc(grants.createdAt));
+  const allExpenses = preloadedExpenses ?? (await listExpenses());
+  const allLinks = await db.select().from(grantLinks);
 
   return grantRows.map((g) => {
     const grantExpenses = allExpenses.filter((e) => e.grantId === g.id);

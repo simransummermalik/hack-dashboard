@@ -28,12 +28,11 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
   const task = await getTaskDetail(params.id);
   if (!task) notFound();
 
-  const [members, categories, comments, activity] = await Promise.all([
-    listActiveMembers(),
-    listCategories("task"),
-    listCommentsForEntity("task", task.id),
-    listActivityForEntity("task", task.id),
-  ]);
+  // Sequential — see src/lib/queries/dashboard.ts for why.
+  const members = await listActiveMembers();
+  const categories = await listCategories("task");
+  const comments = await listCommentsForEntity("task", task.id);
+  const activity = await listActivityForEntity("task", task.id);
 
   const canEdit = canEditTask(member, { creatorId: task.creatorId, assigneeIds: task.assigneeIds });
 

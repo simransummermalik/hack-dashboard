@@ -24,12 +24,11 @@ export default async function IdeaDetailPage({ params }: { params: { id: string 
   const idea = await getIdeaDetail(params.id);
   if (!idea) notFound();
 
-  const [categories, taskCategories, members, comments] = await Promise.all([
-    listCategories("idea"),
-    listCategories("task"),
-    listActiveMembers(),
-    listCommentsForEntity("idea", idea.id),
-  ]);
+  // Sequential — see src/lib/queries/dashboard.ts for why.
+  const categories = await listCategories("idea");
+  const taskCategories = await listCategories("task");
+  const members = await listActiveMembers();
+  const comments = await listCommentsForEntity("idea", idea.id);
 
   const canEdit = canEditOwnedRecord(member, idea.submittedById);
   const canConvert = isOfficerOrAdmin(member);

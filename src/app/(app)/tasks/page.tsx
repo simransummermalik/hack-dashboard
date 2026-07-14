@@ -9,12 +9,11 @@ export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
   const member = await requireCurrentMemberOrRedirect();
-  const [tasks, members, categories, exemptionReasons] = await Promise.all([
-    listTasksWithContext(),
-    listActiveMembers(),
-    listCategories("task"),
-    listReviewExemptionReasons(),
-  ]);
+  // Sequential — see src/lib/queries/dashboard.ts for why.
+  const tasks = await listTasksWithContext();
+  const members = await listActiveMembers();
+  const categories = await listCategories("task");
+  const exemptionReasons = await listReviewExemptionReasons();
 
   return (
     <TasksView

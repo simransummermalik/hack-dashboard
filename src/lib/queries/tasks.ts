@@ -43,25 +43,24 @@ export async function listTasksWithContext(): Promise<TaskListItem[]> {
 
   const taskIds = allTasks.map((t) => t.id);
 
-  const [assigneeRows, reviewRows] = await Promise.all([
-    db
-      .select({ taskId: taskAssignees.taskId, memberId: taskAssignees.memberId, memberName: members.fullName })
-      .from(taskAssignees)
-      .innerJoin(members, eq(taskAssignees.memberId, members.id))
-      .where(inArray(taskAssignees.taskId, taskIds)),
-    db
-      .select({
-        taskId: taskReviews.taskId,
-        memberId: taskReviews.memberId,
-        memberName: members.fullName,
-        memberActive: members.active,
-        status: taskReviews.status,
-        comment: taskReviews.comment,
-      })
-      .from(taskReviews)
-      .innerJoin(members, eq(taskReviews.memberId, members.id))
-      .where(inArray(taskReviews.taskId, taskIds)),
-  ]);
+  // Sequential — see src/lib/queries/dashboard.ts for why.
+  const assigneeRows = await db
+    .select({ taskId: taskAssignees.taskId, memberId: taskAssignees.memberId, memberName: members.fullName })
+    .from(taskAssignees)
+    .innerJoin(members, eq(taskAssignees.memberId, members.id))
+    .where(inArray(taskAssignees.taskId, taskIds));
+  const reviewRows = await db
+    .select({
+      taskId: taskReviews.taskId,
+      memberId: taskReviews.memberId,
+      memberName: members.fullName,
+      memberActive: members.active,
+      status: taskReviews.status,
+      comment: taskReviews.comment,
+    })
+    .from(taskReviews)
+    .innerJoin(members, eq(taskReviews.memberId, members.id))
+    .where(inArray(taskReviews.taskId, taskIds));
 
   const assigneesByTask = new Map<string, { id: string; name: string }[]>();
   for (const row of assigneeRows) {
@@ -146,25 +145,24 @@ export async function getTaskDetail(taskId: string): Promise<TaskDetail | null> 
 
   if (!task) return null;
 
-  const [assigneeRows, reviewRows, linkRows] = await Promise.all([
-    db
-      .select({ memberId: taskAssignees.memberId, memberName: members.fullName })
-      .from(taskAssignees)
-      .innerJoin(members, eq(taskAssignees.memberId, members.id))
-      .where(eq(taskAssignees.taskId, taskId)),
-    db
-      .select({
-        memberId: taskReviews.memberId,
-        memberName: members.fullName,
-        memberActive: members.active,
-        status: taskReviews.status,
-        comment: taskReviews.comment,
-      })
-      .from(taskReviews)
-      .innerJoin(members, eq(taskReviews.memberId, members.id))
-      .where(eq(taskReviews.taskId, taskId)),
-    db.select().from(taskLinks).where(eq(taskLinks.taskId, taskId)),
-  ]);
+  // Sequential — see src/lib/queries/dashboard.ts for why.
+  const assigneeRows = await db
+    .select({ memberId: taskAssignees.memberId, memberName: members.fullName })
+    .from(taskAssignees)
+    .innerJoin(members, eq(taskAssignees.memberId, members.id))
+    .where(eq(taskAssignees.taskId, taskId));
+  const reviewRows = await db
+    .select({
+      memberId: taskReviews.memberId,
+      memberName: members.fullName,
+      memberActive: members.active,
+      status: taskReviews.status,
+      comment: taskReviews.comment,
+    })
+    .from(taskReviews)
+    .innerJoin(members, eq(taskReviews.memberId, members.id))
+    .where(eq(taskReviews.taskId, taskId));
+  const linkRows = await db.select().from(taskLinks).where(eq(taskLinks.taskId, taskId));
 
   const reviews: ReviewRow[] = reviewRows.map((r) => ({
     memberId: r.memberId,

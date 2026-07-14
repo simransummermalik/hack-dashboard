@@ -9,11 +9,10 @@ export const dynamic = "force-dynamic";
 
 export default async function FinancePage() {
   const member = await requireCurrentMemberOrRedirect();
-  const [data, categories, members] = await Promise.all([
-    getFinanceSummary(),
-    listCategories("finance"),
-    listActiveMembers(),
-  ]);
+  // Sequential — see src/lib/queries/dashboard.ts for why.
+  const data = await getFinanceSummary();
+  const categories = await listCategories("finance");
+  const members = await listActiveMembers();
 
   return (
     <FinanceView
