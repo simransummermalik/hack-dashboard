@@ -318,8 +318,78 @@ tests/                  Vitest unit tests.
 
 ## Feature list
 
-See [FEATURES.md](FEATURES.md) for the complete, checked-off list of implemented functionality mapped to every
-requirement in the original spec, plus the final "no incomplete features" verification.
+For the exhaustive, spec-mapped checklist (every requirement from the original brief, checked off against what's
+actually implemented), see [FEATURES.md](FEATURES.md). Here's the practical rundown of what the app does:
+
+### Authentication & accounts
+- Login by full name + 4-digit code (no email/password, no self-registration)
+- Bcrypt-hashed codes, timing-safe lookups that never reveal whether a name exists
+- Per-name+IP login rate limiting with temporary lockout
+- Server-side sessions (httpOnly/secure cookies), auto-expiry, explicit logout
+- Three roles — Admin, Officer, Member — enforced server-side on every action, not just hidden in the UI
+
+### Dashboard
+- My tasks, overdue tasks, tasks blocked on missing reviews
+- **Tasks up for grabs** — unclaimed open tasks anyone can pick up with one click (board, list, and dashboard)
+- Needs-my-review queue, upcoming meetings, recent ideas, budget summary, recent activity feed
+- Role-aware quick-create (task / idea / meeting / expense)
+
+### Tasks
+- Full fields: title, description, creator, multiple assignees, category, priority, status, due date, links
+- Jira-style board (drag-and-drop, server-validated on drop) and a searchable/filterable list view
+- Filters: assignee (including "unassigned"), creator, status, category, priority, review status, due date
+- Comments with `@Full Name` mentions, full activity/audit history per task
+- Claim button on any unassigned open task
+
+### Mandatory member reviews
+- Every new task auto-generates a pending review for every active member (unless the creator picks an
+  admin-configured exemption reason)
+- Review responses: Approved / No Concerns / Changes Requested / Not Applicable, with optional comments
+- Live completion stats (approved / no concerns / changes requested / waiting / % complete)
+- A task can't be marked Completed until every active member's review resolves and no change requests remain —
+  admins can override, but must type a reason that's permanently logged
+- Deactivated members' pending reviews stop blocking completion but stay visible in history
+- "Remind missing reviewers" notification action, a personal review inbox, and an org-wide missing-reviews view
+
+### Ideas
+- Title, description, category, estimated cost/effort, timeline, benefits, risks, comments
+- One vote per member (toggleable), sortable by newest / most voted / lowest cost
+- Convert an approved idea into one or more real tasks (auto-linked back to the idea, goes through normal review)
+
+### Meetings
+- Agenda, notes, decisions, action items, links, attendee list
+- Self-service RSVP (Attending / Maybe / Not Attending)
+- Action items convert directly into tasks, linked back to the source meeting
+- Calendar view, upcoming list, and a past-meetings archive
+
+### Finance
+- Grants: funding org, amounts, dates, deadlines, restrictions, status, supporting links
+- Expenses: amount, category, grant used, requester/approver, status, receipt link
+- Auto-calculated totals (funding, spent, committed, remaining) — all in integer cents, no float rounding bugs
+- Warnings for expenses that would exceed a grant's remaining balance, approaching spending deadlines, grant
+  restrictions, and missing approval/documentation
+- Explicitly labeled as internal tracking, not formal accounting
+
+### Notifications
+- In-app center with read/unread state, generated for task assignment, review requests, changes requested,
+  mentions, comments, meeting scheduling, action items, grant deadlines, expense approvals, admin announcements
+- Optional email delivery of the same events via Resend (see [Email notifications](#email-notifications)) — fully
+  additive, the app works the same with or without it configured
+
+### Search, directory, and audit
+- Global search across tasks, ideas, meetings, members, grants, and expenses
+- Member directory: role, active status, tasks assigned, reviews completed/waiting
+- Immutable, insert-only audit log — full detail for admins, a content-focused feed for everyone else
+
+### Admin settings
+- Member management (add, deactivate/reactivate, change role, reset code, bulk JSON import)
+- Task/idea/financial category management
+- Review-exemption reason management
+- Organization branding and an org-wide announcement broadcaster
+
+### Design
+- Responsive (desktop sidebar + mobile drawer nav), loading/empty/error states everywhere, confirmation dialogs on
+  destructive actions, status/priority/review badges, progress bars for review completion
 
 ---
 

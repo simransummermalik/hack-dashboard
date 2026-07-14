@@ -37,6 +37,7 @@ and a working UI. Nothing here is a placeholder, a mock, or a visual-only elemen
 - [x] Recent activity feed (from the audit log)
 - [x] Overdue tasks (assigned to or created by me)
 - [x] Tasks blocked by missing reviews
+- [x] Tasks up for grabs — unclaimed open tasks, one-click claim (`src/actions/tasks.ts: claimTask`)
 - [x] Quick-create button (task/idea/meeting/expense, role-aware)
 
 ## Tasks
@@ -49,6 +50,8 @@ and a working UI. Nothing here is a placeholder, a mock, or a visual-only elemen
       (`changeTaskStatus` re-checks the review gate and permissions regardless of what the client sent)
 - [x] Searchable/filterable list view (assignee, creator, status, category, priority, review status; search by title)
 - [x] Task detail page: full description, links, assignees, review panel, comments, immutable activity history
+- [x] Claim an unassigned task from the board, list, or dashboard — adds you as assignee and notifies the creator,
+      no schema changes involved (purely derived from existing `task_assignees` data)
 
 ## Mandatory member review system
 
@@ -115,6 +118,10 @@ and a working UI. Nothing here is a placeholder, a mock, or a visual-only elemen
       review reminder
 - [x] Mark one / mark all as read
 - [x] Unread badge in the top bar
+- [x] Optional email delivery of every notification type via Resend (`src/lib/notifications.ts`) — off by default,
+      fully additive; a member with no email on file or an unconfigured/failing provider just gets in-app
+      notifications, delivery failures are logged and swallowed rather than breaking the triggering action. See
+      README.md "Email notifications" for setup and the sandbox-sender limitation.
 
 ## Comments & mentions
 
