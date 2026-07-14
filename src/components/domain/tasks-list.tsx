@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TaskStatusBadge } from "@/components/domain/status-badge";
 import { PriorityBadge } from "@/components/domain/priority-badge";
 import { EmptyState } from "@/components/domain/empty-state";
+import { ClaimTaskButton } from "@/components/domain/claim-task-button";
 import { Search, ListFilter } from "lucide-react";
 import { TASK_STATUSES, TASK_STATUS_LABELS, TASK_PRIORITIES, TASK_PRIORITY_LABELS } from "@/lib/constants";
 import { formatDate, isOverdue, cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ import type { MemberSummary } from "@/lib/queries/members";
 import type { CategoryOption } from "@/lib/queries/categories";
 
 const ALL = "__all__";
+const UNASSIGNED = "__unassigned__";
 
 export function TasksList({
   tasks,
@@ -39,7 +41,8 @@ export function TasksList({
       if (status !== ALL && t.status !== status) return false;
       if (priority !== ALL && t.priority !== priority) return false;
       if (category !== ALL && t.categoryName !== category) return false;
-      if (assignee !== ALL && !t.assigneeIds.includes(assignee)) return false;
+      if (assignee === UNASSIGNED && t.assigneeIds.length > 0) return false;
+      if (assignee !== ALL && assignee !== UNASSIGNED && !t.assigneeIds.includes(assignee)) return false;
       if (creator !== ALL && t.creatorId !== creator) return false;
       if (reviewStatus === "complete" && !t.reviewSummary.canComplete) return false;
       if (reviewStatus === "incomplete" && t.reviewSummary.canComplete) return false;
@@ -85,6 +88,7 @@ export function TasksList({
           <SelectTrigger className="w-40"><SelectValue placeholder="Assignee" /></SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>Any assignee</SelectItem>
+            <SelectItem value={UNASSIGNED}>Unassigned (up for grabs)</SelectItem>
             {members.map((m) => (
               <SelectItem key={m.id} value={m.id}>{m.fullName}</SelectItem>
             ))}
@@ -137,7 +141,15 @@ export function TasksList({
                   <td className="px-4 py-2.5"><TaskStatusBadge status={t.status} /></td>
                   <td className="px-4 py-2.5"><PriorityBadge priority={t.priority} /></td>
                   <td className="px-4 py-2.5 text-muted-foreground">{t.categoryName ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{t.assigneeNames.join(", ") || "Unassigned"}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">
+                    {t.assigneeNames.length > 0 ? (
+                      t.assigneeNames.join(", ")
+                    ) : t.status !== "completed" && t.status !== "archived" ? (
+                      <ClaimTaskButton taskId={t.id} />
+                    ) : (
+                      "Unassigned"
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 text-muted-foreground">{t.creatorName}</td>
                   <td className={cn("px-4 py-2.5", isOverdue(t.dueDate, t.status) ? "font-medium text-destructive" : "text-muted-foreground")}>
                     {formatDate(t.dueDate)}

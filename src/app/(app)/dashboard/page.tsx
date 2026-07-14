@@ -4,6 +4,7 @@ import {
   CalendarClock,
   CheckCircle2,
   ClipboardList,
+  Hand,
   Lightbulb,
   ListTodo,
   ShieldAlert,
@@ -16,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/domain/empty-state";
 import { TaskStatusBadge } from "@/components/domain/status-badge";
 import { PriorityBadge } from "@/components/domain/priority-badge";
+import { ClaimTaskButton } from "@/components/domain/claim-task-button";
 import { formatCents } from "@/lib/money";
 import { formatDate, isOverdue } from "@/lib/utils";
 import { QuickCreate } from "@/components/app-shell/quick-create";
@@ -114,6 +116,39 @@ export default async function DashboardPage() {
                         <p className="text-xs text-muted-foreground">Created by {t.creatorName}</p>
                       </Link>
                       <TaskStatusBadge status={t.status} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Hand className="h-4 w-4" /> Tasks up for grabs
+              </CardTitle>
+              <Link href="/tasks" className="text-xs text-primary hover:underline">
+                View all
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {data.unassignedTasks.length === 0 ? (
+                <EmptyState icon={Hand} title="Nothing unclaimed right now" description="Every open task has someone on it." />
+              ) : (
+                <ul className="divide-y">
+                  {data.unassignedTasks.map((t) => (
+                    <li key={t.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <Link href={`/tasks/${t.id}`} className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium hover:underline">{t.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t.categoryName ?? "General"} · Due {formatDate(t.dueDate)}
+                        </p>
+                      </Link>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <PriorityBadge priority={t.priority} />
+                        <ClaimTaskButton taskId={t.id} />
+                      </div>
                     </li>
                   ))}
                 </ul>

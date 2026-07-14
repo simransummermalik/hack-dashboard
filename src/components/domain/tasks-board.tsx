@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PriorityBadge } from "@/components/domain/priority-badge";
 import { MemberAvatarStack } from "@/components/domain/member-avatar";
 import { ReviewProgress } from "@/components/domain/review-progress";
+import { ClaimTaskButton } from "@/components/domain/claim-task-button";
 import { AlertCircle } from "lucide-react";
 import { changeTaskStatus } from "@/actions/tasks";
 import { useToast } from "@/components/ui/use-toast";
@@ -116,10 +117,17 @@ export function TasksBoard({ tasks, isAdmin }: { tasks: TaskListItem[]; isAdmin:
                               {t.reviewSummary.completed}/{t.reviewSummary.total} reviewed
                             </div>
                           )}
-                          {t.assigneeNames.length > 0 && (
+                          {t.assigneeNames.length > 0 ? (
                             <div className="flex justify-end pt-1">
                               <MemberAvatarStack names={t.assigneeNames} max={3} />
                             </div>
+                          ) : (
+                            t.status !== "completed" &&
+                            t.status !== "archived" && (
+                              <div className="flex justify-end pt-1">
+                                <ClaimTaskButton taskId={t.id} />
+                              </div>
+                            )
                           )}
                         </CardContent>
                       </Card>

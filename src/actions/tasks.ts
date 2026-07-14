@@ -391,3 +391,47 @@ export async function remindMissingReviewers(taskId: string): Promise<ActionResu
   revalidatePath(`/tasks/${taskId}`);
   return { ok: true, remindedCount: pendingReviewers.length };
 }
+
+/** Any active member can claim a task that currently has nobody assigned. */
+export async function claimTask(taskId: string): Promise<ActionResult> {
+  const actor = await requireCurrentMember();
+  requireMember(actor);
+
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  if (!task) return { ok: false, error: "Task not found." };
+  if (task.status === "completed" || task.status === "archived") {
+    return { ok: false, error: "This task is no longer open." };
+  }
+
+  const currentAssignees = await getTaskAssigneeIds(taskId);
+  if (currentAssignees.length > 0) {
+    return { ok: false, error: "Someone already claimed this task." };
+  }
+
+  await db.insert(taskAssignees).values({ taskId, memberId: actor.id }).onConflictDoNothing();
+
+  await recordAudit({
+    actorId: actor.id,
+    action: "task_assignees_changed",
+    entityType: "task",
+    entityId: taskId,
+    after: { claimedBy: actor.id },
+  });
+
+  if (task.creatorId !== actor.id) {
+    await notify({
+      memberId: task.creatorId,
+      type: "task_assigned",
+      title: "Someone claimed your task",
+      body: `${actor.fullName} claimed "${task.title}".`,
+      link: `/tasks/${taskId}`,
+      entityType: "task",
+      entityId: taskId,
+    });
+  }
+
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath("/dashboard");
+  return { ok: true };
+}

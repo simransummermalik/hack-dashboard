@@ -16,6 +16,7 @@ export interface DashboardData {
   recentActivity: Awaited<ReturnType<typeof listRecentActivity>>;
   overdueTasks: TaskListItem[];
   blockedByMissingReviews: TaskListItem[];
+  unassignedTasks: TaskListItem[];
 }
 
 export async function getDashboardData(memberId: string): Promise<DashboardData> {
@@ -61,6 +62,13 @@ export async function getDashboardData(memberId: string): Promise<DashboardData>
       !t.reviewSummary.canComplete
   );
 
+  // "Up for grabs": open tasks nobody has claimed yet. Excludes Backlog so
+  // this reads as "ready to work on right now," not the entire unsorted
+  // backlog — Backlog items are still visible/claimable from the board.
+  const unassignedTasks = activeTasks
+    .filter((t) => t.assigneeIds.length === 0 && t.status !== "backlog")
+    .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
+
   return {
     myTasks: myTasks.slice(0, 8),
     needsMyReview,
@@ -70,5 +78,6 @@ export async function getDashboardData(memberId: string): Promise<DashboardData>
     recentActivity: activity,
     overdueTasks,
     blockedByMissingReviews,
+    unassignedTasks,
   };
 }
